@@ -1,0 +1,95 @@
+---
+title: "BakerRipley_3"
+output: html_document
+date: "2023-01-29"
+---
+
+```{r}
+rm(list = ls())
+library(tidyverse)
+library(dplyr)
+library(plotly)
+library(ggplot2)
+library(waffle)
+```
+
+```{r}
+Complete_Data <- read_csv("/Users/abdullah/RSTUDIO/HACKATHON/Complete_Voter_Data.csv") #Imported from Python
+Complete_Data
+```
+
+```{r}
+DataforTexts <- read_csv("/Users/abdullah/Desktop/Complete_Voter_Data.csv")
+
+DataforTexts$Total_Campaign_Cost = sum(DataforTexts$Mail_Cost, DataforTexts$Canvass_Cost, DataforTexts$Text_Cost, DataforTexts$Call_Cost)
+DataforTexts
+
+Total_Votes <- sum(Complete_Data$`Voting Status`)
+
+Total_Cost <- sum((DataforTexts$Mail_Cost), sum(DataforTexts$Canvass_Cost), sum(DataforTexts$Text_Cost), sum(DataforTexts$Call_Cost))
+Total_Cost
+
+Cost_per_Vote <- Total_Cost/Total_Votes
+Cost_per_Vote
+```
+
+```{r}
+Precinct_Level_Data_Summary <- read_csv("/Users/abdullah/RSTUDIO/HACKATHON/Precinct_Level_Data_Summary.csv")
+Precinct_Level_Data_Summary
+```
+
+```{r}
+Targeted_Precincts_Summary <- subset(Precinct_Level_Data_Summary, Precinct_Level_Data_Summary$Precinct == 9 | Precinct_Level_Data_Summary$Precinct == 10 | Precinct_Level_Data_Summary$Precinct == 11 | Precinct_Level_Data_Summary$Precinct == 44 | Precinct_Level_Data_Summary$Precinct == 46 | Precinct_Level_Data_Summary$Precinct == 285 | Precinct_Level_Data_Summary$Precinct == 347 | Precinct_Level_Data_Summary$Precinct == 379 | Precinct_Level_Data_Summary$Precinct == 411 | Precinct_Level_Data_Summary$Precinct == 430 | Precinct_Level_Data_Summary$Precinct == 431 | Precinct_Level_Data_Summary$Precinct == 664 | Precinct_Level_Data_Summary$Precinct == 752 | Precinct_Level_Data_Summary$Precinct == 792 | Precinct_Level_Data_Summary$Precinct == 793)
+
+Targeted_Precincts_Summary
+
+Similar_Precincts_Summary <- subset(Precinct_Level_Data_Summary, Precinct_Level_Data_Summary$Precinct == 755 | Precinct_Level_Data_Summary$Precinct == 329 | Precinct_Level_Data_Summary$Precinct == 963 | Precinct_Level_Data_Summary$Precinct == 496 | Precinct_Level_Data_Summary$Precinct == 952 | Precinct_Level_Data_Summary$Precinct == 313 | Precinct_Level_Data_Summary$Precinct == 184 | Precinct_Level_Data_Summary$Precinct == 425 | Precinct_Level_Data_Summary$Precinct == 284 | Precinct_Level_Data_Summary$Precinct == 1017 | Precinct_Level_Data_Summary$Precinct == 676 | Precinct_Level_Data_Summary$Precinct == 102 | Precinct_Level_Data_Summary$Precinct == 832 | Precinct_Level_Data_Summary$Precinct == 280 | Precinct_Level_Data_Summary$Precinct == 1040)
+
+NonTargeted_Precincts_Summary <- subset(Precinct_Level_Data_Summary, !Precinct_Level_Data_Summary$Precinct %in% Targeted_Precincts_Summary$Precinct)
+
+NonTargeted_Precincts_Summary
+```
+
+```{r}
+Targeted_Precincts_Turnout <- mean(Targeted_Precincts_Summary$Voter_Turnout_Rate)
+Similar_Precincts_Turnout <- mean(Similar_Precincts_Summary$Voter_Turnout_Rate)
+NonTargeted_Precincts_Turnout <- mean(NonTargeted_Precincts_Summary$Voter_Turnout_Rate)
+
+Percentage <- c(Targeted_Precincts_Turnout, Similar_Precincts_Turnout, NonTargeted_Precincts_Turnout)
+Turnout_Rate <- c("Targeted Precincts", "Similar Precincts", "Non-targeted Precincts")
+Turnout_Comparison <- data.frame(Variable, Rate)
+Turnout_Comparison
+
+barchart <-ggplot(Turnout_Comparison, aes(x=Turnout_Rate, y=Percentage, fill=Percentage)) +
+  geom_bar(stat="identity")+theme_minimal()
+barchart
+```
+```{r}
+suppressWarnings(print(ggplot(Precinct_Level_Data_Summary, aes(x = `Median_Age`, y = `Voter_Turnout_Rate`)) +
+                         xlab("Median Age in Precinct") + ylab("Voter Turnout Rate") + geom_point() + stat_smooth(method = "lm", col = "red")))
+```
+```{r}
+Voted_Election_Day <- c(sum(Targeted_Precincts_Summary$Voted_Election_Day), sum(Similar_Precincts_Summary$Voted_Election_Day), sum(NonTargeted_Precincts_Summary$Voted_Election_Day))
+
+Mail_In_Ballot <- c(sum(Targeted_Precincts_Summary$Mail_In_Ballot), sum(Similar_Precincts_Summary$Mail_In_Ballot), sum(NonTargeted_Precincts_Summary$Mail_In_Ballot))
+
+Early_In_Person <- c(sum(Targeted_Precincts_Summary$Early_In_Person), sum(Similar_Precincts_Summary$Early_In_Person), sum(NonTargeted_Precincts_Summary$Early_In_Person))
+
+Provisional_Ballot <- c(sum(Targeted_Precincts_Summary$Provisional), sum(Similar_Precincts_Summary$Provisional), sum(NonTargeted_Precincts_Summary$Provisional))
+
+
+Precincts <- c("Targeted Precincts", "Similar Precincts", "Non-Targeted Precincts")
+
+Precincts_Voting_Method_Comparison <- data.frame(Precincts, Voted_Election_Day, Mail_In_Ballot, Early_In_Person, Provisional_Ballot)
+Precincts_Voting_Method_Comparison
+
+Targeted_Precincts <- c("Voted Election Day" = 4435, "Mail In Ballot" = 891, "Early In-Person" = 7368, "Provisional Ballot" = 80)
+waffle(Targeted_Precincts/50, rows = 15, title = "Targeted Precincts")
+
+Similar_Precincts <- c("Voted Election Day" = 2926, "Mail In Ballot" = 435, "Early In-Person" = 3972, "Provisional Ballot" = 46)
+waffle(Similar_Precincts/46, rows = 15, title = "Similar Precincts")
+
+NonTargeted_Precincts <- c("Voted Election Day" = 339279, "Mail In Ballot" = 58082, "Early In-Person" = 674350, "Provisional Ballot" = 4339)
+waffle(NonTargeted_Precincts/4000, rows = 15, title = "Non-Targeted Precincts")
+
+```

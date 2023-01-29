@@ -1,0 +1,66 @@
+---
+title: "BakerRipley_2"
+output: html_document
+date: "2023-01-29"
+---
+
+```{r}
+rm(list = ls())
+library(readr)
+library(dplyr)
+library(tidyverse)
+library(ggplot2)
+library(waffle)
+library(ggthemes)
+```
+
+```{r}
+Mailers_Effort <- read_csv("HACKATHON/MailersEffort.csv", show_col_types = FALSE)
+BlockWalking_Effort <- read_csv("HACKATHON/BlockWalkingEffort.csv", show_col_types = FALSE)
+TextBanking_Effort_Attempts <- read_csv("HACKATHON/TextBankingAttempts.csv", show_col_types = FALSE)
+TextBanking_Effort_Contacts <- read_csv("HACKATHON/TextBankingContacts.csv", show_col_types = FALSE)
+TextPhoneBanking_Effort_Attempts <- read_csv("HACKATHON/TextPhoneBankingAttempts.csv", show_col_types = FALSE)
+TextPhoneBanking_Effort_Contacts <- read_csv("HACKATHON/TextPhoneBankingContacts.csv", show_col_types = FALSE)
+
+Target_Voter <- read_csv("HACKATHON/TargetVoter.csv", show_col_types = FALSE)
+Mailer_Sent <- read_csv("HACKATHON/MailerSent.csv", show_col_types = FALSE)
+Voting_Status <- read_csv("HACKATHON/VotingStatus.csv", show_col_types = FALSE)
+Calls_Attempted <- read_csv("HACKATHON/CallsAttempted.csv", show_col_types = FALSE)
+Calls_Answered <- read_csv("HACKATHON/CallsAnswered.csv", show_col_types = FALSE)
+Canvass_Attempts <- read_csv("HACKATHON/CanvassAttempts.csv", show_col_types = FALSE)
+Canvass_Successes <- read_csv("HACKATHON/CanvassSuccesses.csv", show_col_types = FALSE)
+Texts_Data <- read_csv("HACKATHON/TextsData.csv", show_col_types = FALSE)
+```
+
+```{r}
+BlockWalking <- as.data.frame(table(BlockWalking_Effort$`result of attempt`))
+BlockWalking
+
+BlockWalkingChart <- c("Canvassed" = 1180, "Deceased" = 5, "Inaccessible" = 171, "Moved" = 343, "Not Home" = 5257, "Other Language" = 15, "Refused" = 119)
+waffle(BlockWalkingChart/15, rows = 20) 
+```
+```{r}
+table(Voting_Status$`Vote Type`)
+VotingTypeChart <- c("Mail In Voting" = sum(1716, 59791), "Early Voting In Person" = 692049, "Voted on Election Day" = 349311, "Provisional Voting" = 4534)
+
+waffle(VotingTypeChart/3000, rows = 15)
+```
+```{r}
+Complete_Voter_Data <- read_csv("HACKATHON//Complete_Voter_Data.csv")
+Complete_Voter_Data <- Complete_Voter_Data[,-1]
+Complete_Voter_Data
+```
+
+```{r}
+print(ggplot(Complete_Voter_Data, aes(x = `Canvass Attempts`, y = `Voting Status`)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red")) #It appears that more canvass attempts predict fewer chances of voting. This is not surprising because canvassing attempts were targeted at low propensity voters
+```
+
+```{r}
+print(ggplot(Complete_Voter_Data, aes(x = `Canvass Successes`, y = `Voting Status`)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red")) 
+```
+
+

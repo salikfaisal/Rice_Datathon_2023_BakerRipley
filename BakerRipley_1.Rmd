@@ -1,0 +1,162 @@
+---
+title: "BakerRipley_1"
+output: html_document
+date: "2023-01-28"
+---
+
+#DATATHON PROJECT
+```{r}
+rm(list = ls())
+library(readr)
+library(tidyverse)
+library(dplyr)
+```
+
+# DATA CLEANING
+## DATA CLEANING VOTER DATA
+
+```{r}
+#REGISTERED VOTERS
+#Combine all the registered voter data
+All_Registered_1 <- read_csv("HACKATHON//AllRegistered_Harris_1of3.csv", show_col_types = FALSE)
+All_Registered_2 <- read_csv("HACKATHON//AllRegistered_Harris_2of3.csv", show_col_types = FALSE)
+All_Registered_3 <- read_csv("HACKATHON//AllRegistered_Harris_3of3.csv", show_col_types = FALSE)
+
+All_Registered_Voters <- data.frame(rbind(All_Registered_1, All_Registered_2, All_Registered_3))
+colnames(All_Registered_Voters)[2] ="Voter ID"
+All_Registered_Voters
+```
+
+```{r}
+#VOTERS IN THE NOVEMBER 2022 ELECTION
+Voters_1 <- read_csv("HACKATHON//Nov2022_Voters_1of3.csv", show_col_types = FALSE)
+Voters_2 <- read_csv("HACKATHON//Nov2022_Voters_2of3.csv", show_col_types = FALSE)
+Voters_3 <- read_csv("HACKATHON//Nov2022_Voters_3of3.csv", show_col_types = FALSE)
+
+Nov2022_Voters <- data.frame(rbind(Voters_1, Voters_2, Voters_3))
+Nov2022_Voters <- replace(Nov2022_Voters, is.na(Nov2022_Voters), "Mail_In_Ballot")
+Nov2022_Voters
+```
+
+```{r}
+#Which Precincts are included in the data set?
+All_Registered_Voters_Ordered <- All_Registered_Voters[order(All_Registered_Voters$Precinct),]
+All_Precincts <- data.frame(unique(All_Registered_Voters_Ordered$Precinct))
+All_Precincts <- All_Precincts %>% set_names(c("Precinct"))
+All_Precincts
+```
+
+```{r}
+#Target Voters
+Target_Voters <- read_csv("HACKATHON//GOTV_TargetVoters.csv", show_col_types = FALSE)
+Target_Voters$PrecinctName <- as.numeric(gsub(Target_Voters$PrecinctName, pattern="Harris - {0,4}", replacement = ""))
+Target_Voters
+
+#Which Precincts Were Targeted?
+unique(Target_Voters$PrecinctName) 
+```
+
+```{r}
+Poll_Location <- read_csv("HACKATHON//PollLocations_Codes_Nov2022Election.csv", show_col_types = FALSE)
+Poll_Location$Zip <- gsub(Poll_Location$Zip, pattern="-[0-9]{0,4}", replacement = "")
+Poll_Location
+```
+
+## DATA CLEANING CAMPAIGNING DATA
+
+```{r}
+Mailers_Effort <- read_csv("HACKATHON//GOTVMailers_Efforts.csv", show_col_types = FALSE)
+Mailers_Effort$PrecinctName <- as.numeric(gsub(Mailers_Effort$PrecinctName, pattern="Harris - {0,4}", replacement = ""))
+Mailers_Effort
+
+BlockWalking_Effort <- read_csv("HACKATHON//BlockWalking_Effort.csv", show_col_types = FALSE)
+BlockWalking_Effort
+
+TextBanking_Effort_Attempts <- read_csv("HACKATHON//TextBanking_Efforts_Attempts.csv", show_col_types = FALSE)
+TextBanking_Effort_Attempts
+
+TextBanking_Effort_Contacts <- read_csv("HACKATHON//TextBanking_Efforts_Contacts.csv", show_col_types = FALSE)
+TextBanking_Effort_Contacts
+
+TextPhoneBanking_Effort_Attempts <- read_csv("HACKATHON//TextAndPhoneBanking_Data_Attempts.csv", show_col_types = FALSE)
+TextPhoneBanking_Effort_Attempts <- TextPhoneBanking_Effort_Attempts[, -5]
+TextPhoneBanking_Effort_Attempts
+
+TextPhoneBanking_Effort_Contacts <- read_csv("HACKATHON//TextAndPhoneBanking_Data_Contacts.csv", show_col_types = FALSE)
+TextPhoneBanking_Effort_Contacts
+```
+
+```{r}
+Calls_Attempted <- TextBanking_Effort_Attempts[,-1:-2]
+CallsAttempted <- rep(1, 18655)
+Calls_Attempted <- data.frame(table(Calls_Attempted$`Voter ID`))
+colnames(Calls_Attempted)[1] ="Voter ID"
+colnames(Calls_Attempted)[2] ="Calls Attempted"
+Calls_Attempted <- replace(Calls_Attempted, is.na(Calls_Attempted), 0)
+Calls_Attempted
+
+Calls_Answered <- subset(TextPhoneBanking_Effort_Contacts, TextPhoneBanking_Effort_Contacts$`Contact Outcome` == "Talking to Correct Person")
+Calls_Answered <- Calls_Answered[,-2:-4]
+CallsAnswered <- rep(1, 497)
+Calls_Answered <- data.frame(table(Calls_Answered$`Voter ID`))
+colnames(Calls_Answered)[1] ="Voter ID"
+colnames(Calls_Answered)[2] ="Calls Answered"
+Calls_Answered <- replace(Calls_Answered, is.na(Calls_Answered), 0)
+Calls_Answered
+
+Mailer_Sent <- Mailers_Effort[,-2:-6]
+MailerSent <- rep(1, 37428)
+Mailer_Sent <- data.frame(table(Mailer_Sent$`Voter ID`))
+colnames(Mailer_Sent)[1] ="Voter ID"
+colnames(Mailer_Sent)[2] ="Mailer Sent"
+Mailer_Sent <- replace(Mailer_Sent, is.na(Mailer_Sent), 0)
+Mailer_Sent
+
+Target_Voter <- Target_Voters[,-2:-5]
+TargetVoter <- rep(1, 22046)
+Target_Voter <- data.frame(table(Target_Voter$`Voter ID`))
+colnames(Target_Voter)[1] ="Voter ID"
+colnames(Target_Voter)[2] ="Target Voter"
+Target_Voter$`Voter ID` <- Target_Voter$`Voter ID`
+Target_Voter <- replace(Target_Voter, is.na(Target_Voter), 0)
+Target_Voter
+
+Voting_Status <- Nov2022_Voters[,c(-3:-7, -9:-25)]
+VotingStatus <- rep(1, 1107401)
+Voting_Status <- cbind(Voting_Status, VotingStatus)
+colnames(Voting_Status)[1] ="Voter ID"
+colnames(Voting_Status)[2] ="Vote Type"
+colnames(Voting_Status)[3] ="Voting Site"
+colnames(Voting_Status)[4] ="Voting Status"
+Voting_Status
+
+Canvass_Attempts <- BlockWalking_Effort[,c(-2:-4)]
+Canvass_Attempts <- data.frame(table(Canvass_Attempts$VoterID))
+colnames(Canvass_Attempts)[1] ="Voter ID"
+colnames(Canvass_Attempts)[2] ="Canvass Attempts"
+Canvass_Attempts
+
+Canvass_Successes <- BlockWalking_Effort[, c(-2:-4)]
+colnames(Canvass_Successes)[1] ="Voter ID"
+colnames(Canvass_Successes)[2] ="Canvass Successes"
+Canvass_Successes <- subset(Canvass_Successes, Canvass_Successes$`Canvass Successes` == "Canvassed")
+Canvass_Successes <- data.frame(table(Canvass_Successes$`Voter ID`))
+colnames(Canvass_Successes)[1] ="Voter ID"
+colnames(Canvass_Successes)[2] ="Canvass Successes"
+Canvass_Successes
+
+Texts_Data <- read_csv("All_Registered_Voters_In_Harris_County.csv")
+Texts_Data <- Texts_Data[, c(-1:-2, -4:-7)]
+Texts_Data
+```
+
+```{r}
+write.csv(Calls_Attempted, "/Users/abdullah/Desktop/CallsAttempted.csv", row.names = FALSE)
+write.csv(Calls_Answered, "/Users/abdullah/Desktop/CallsAnswered.csv", row.names = FALSE)
+write.csv(Mailer_Sent, "/Users/abdullah/Desktop/MailerSent.csv", row.names = FALSE)
+write.csv(Target_Voter, "/Users/abdullah/Desktop/TargetVoter.csv", row.names = FALSE)
+write.csv(Voting_Status, "/Users/abdullah/Desktop/VotingStatus.csv", row.names = FALSE)
+write.csv(Canvass_Attempts, "/Users/abdullah/Desktop/CanvassAttempts.csv", row.names = FALSE)
+write.csv(Canvass_Successes, "/Users/abdullah/Desktop/CanvassSuccesses.csv", row.names = FALSE)
+write.csv(Texts_Data, "/Users/abdullah/Desktop/TextsData.csv", row.names = FALSE)
+```
